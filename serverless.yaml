@@ -1,0 +1,42 @@
+service: star-wars-fans
+
+plugins:
+  - serverless-offline
+
+custom:
+    serverless-offline:
+        httpPort: 3003
+        lambdaPort: 3005
+
+functions:
+  getFans:
+    handler: dist/main.getFans
+    events:
+      - http:
+          method: GET
+          path: /fans
+
+  saveFan:
+    handler: dist/main.saveFan
+    events:
+      - http:
+          method: POST
+          path: /fans
+
+provider:
+  name: aws
+  region: sa-east-1
+  runtime: nodejs18.x
+  stage: dev
+  environment:
+    FANS_DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}   
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Scan
+        - dynamodb:PutItem
+      Resource: 
+        Fn::Join:
+          - ''
+          - - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/"
+            - ${self:provider.environment.FANS_DYNAMODB_TABLE}
